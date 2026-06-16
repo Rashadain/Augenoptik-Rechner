@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Augenoptik Taschenrechner</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- KaTeX für Formel-Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="document.dispatchEvent(new Event('katex-ready'))"></script>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="16" cy="16" rx="14" ry="8" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="16" cy="16" r="4" fill="currentColor" opacity="0.8"/>
+        <line x1="2" y1="16" x2="30" y2="16" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+        <circle cx="10" cy="16" r="1.5" fill="currentColor" opacity="0.6"/>
+        <circle cx="22" cy="16" r="1.5" fill="currentColor" opacity="0.6"/>
+      </svg>
+      <div>
+        <div class="header-title">Augenoptik Rechner</div>
+        <div class="header-sub">Optische Formeln &amp; Strahlendiagramme</div>
+      </div>
+    </div>
+
+    <div class="header-search">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="search" id="search-input" placeholder="Formel suchen… (/ zum Fokussieren)" autocomplete="off">
+      <button id="search-clear" aria-label="Suche löschen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <button class="theme-toggle" id="print-btn" title="Aktuelle Ansicht drucken / als PDF" aria-label="Drucken">🖨</button>
+    <button class="theme-toggle" id="theme-toggle" title="Hell/Dunkel umschalten" aria-label="Design umschalten">🌙</button>
+
+    <div class="header-badge">
+      <span class="badge-count" id="formula-count">0</span>
+      Formeln
+    </div>
+  </header>
+
+  <!-- ── Tab Navigation ─────────────────────────────────────────────────── -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="start" role="tab" aria-selected="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 21v-6h6v6"/>
+      </svg>
+      <span>Start</span>
+    </button>
+    <button class="tab-btn" data-tab="formulas" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+      </svg>
+      <span>Formeln &amp; Rechner</span>
+    </button>
+    <button class="tab-btn" data-tab="raytracer" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M3 12h6m6 0h6M12 3v6m0 6v6"/>
+        <path d="M5.6 5.6l4.2 4.2m4.4 4.4 4.2 4.2M5.6 18.4l4.2-4.2m4.4-4.4 4.2-4.2"/>
+      </svg>
+      <span>Strahlengang</span>
+    </button>
+    <button class="tab-btn" data-tab="prism" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 22 20 2 20"/>
+        <line x1="12" y1="8" x2="12" y2="14"/>
+        <line x1="9" y1="14" x2="15" y2="14"/>
+      </svg>
+      <span>Prismen</span>
+    </button>
+    <button class="tab-btn" data-tab="refraction" role="tab" aria-selected="false" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M8 12h8M12 8v8"/>
+        <path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/>
+      </svg>
+      <span>Refraktion</span>
+    </button>
+    <button class="tab-btn" data-tab="register" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 6h16M4 12h16M4 18h10"/>
+        <circle cx="19" cy="18" r="3"/>
+      </svg>
+      <span>Register</span>
+    </button>
+    <button class="tab-btn" data-tab="favorites" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      <span>Favoriten</span>
+    </button>
+    <button class="tab-btn" data-tab="beta" role="tab" aria-selected="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M9 8h3.5a2.5 2.5 0 0 1 0 5H9zm0 5h4a2.5 2.5 0 0 1 0 5H9z"/>
+      </svg>
+      <span>Beta</span>
+    </button>
+  </nav>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <div class="app-main">
+
+    <!-- Sidebar (nur im Formeln-Tab sichtbar) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-title">Kategorien</div>
+      <div id="category-list"></div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content-area">
+
+      <!-- ── Tab: Start ──────────────────────────────────────────────── -->
+      <div class="tab-panel active" id="tab-start" role="tabpanel">
+        <section class="start-hero">
+          <div class="start-logo">⊙</div>
+          <h1 class="start-title">Augenoptik-Rechner</h1>
+          <p class="start-claim">Formelsammlung, Rechner &amp; optische Simulationen für die Meisterschule und den Alltag.</p>
+          <p class="start-wish">Möge dieses Werkzeug allen Kolleginnen und Kollegen aus der Augenoptik die Arbeit erleichtern. 💚</p>
+        </section>
+
+        <div class="start-grid">
+          <button class="start-card" onclick="switchTab('formulas')">
+            <div class="start-card-head"><span class="start-card-icon">∑</span><h3>Formeln &amp; Rechner</h3></div>
+            <p>Über <strong>152 Formeln</strong>. Oben bei <em>„Berechnen"</em> wählst du, welche Größe der Aufgabe gesucht ist – die Formel wird <strong>automatisch umgestellt</strong>. Die Lösung erscheint darunter immer in <span class="start-green">Grün</span>.</p>
+            <p class="start-hint">🖨 Über das Druck-Symbol (oben neben dem Schließen) bekommst du zusätzlich den vollständigen <strong>Lösungsweg mit schrittweiser Erklärung</strong> der Umstellung als PDF.</p>
+          </button>
+
+          <button class="start-card" onclick="switchTab('raytracer')">
+            <div class="start-card-head"><span class="start-card-icon">⤳</span><h3>Strahlengang</h3></div>
+            <p>Simuliere die verschiedensten <strong>Strahlengänge durch Ein- und Mehrlinsensysteme</strong> – mit Systemhauptebenen &amp; -brennpunkten, Blenden, Ein-/Austrittspupille und fertigen Vorlagen (Lupe, Fernrohr, Mikroskop …).</p>
+          </button>
+
+          <button class="start-card" onclick="switchTab('prism')">
+            <div class="start-card-head"><span class="start-card-icon">△</span><h3>Prismen</h3></div>
+            <p>Verrechne <strong>normale und schiefgekreuzte Prismen</strong> miteinander – prismatische Nebenwirkung aus Fehlzentrierung plus Rezeptprisma, binokular, inkl. Abgabefähigkeits-Prüfung (ISO 21987).</p>
+          </button>
+
+          <button class="start-card" onclick="switchTab('register')">
+            <div class="start-card-head"><span class="start-card-icon">≡</span><h3>Register</h3></div>
+            <p>Symbol- und Formelverzeichnis zum schnellen Nachschlagen aller Größen, Einheiten und Zusammenhänge.</p>
+          </button>
+        </div>
+
+        <p class="start-foot">Tipp: Mit 🌙 oben rechts zwischen hellem und dunklem Design wechseln. · Eingaben im Prismen-Reiter bleiben gespeichert.</p>
+      </div>
+
+      <!-- ── Tab: Formeln & Rechner ──────────────────────────────────── -->
+      <div class="tab-panel" id="tab-formulas" role="tabpanel">
+        <div class="section-header">
+          <div class="section-title">Alle Formeln</div>
+          <div class="section-count" id="formula-grid-count"></div>
+        </div>
+        <div class="formula-grid" id="formulas-grid"></div>
+      </div>
+
+      <!-- ── Tab: Strahlengang ───────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-raytracer" role="tabpanel">
+        <div class="raytracer-layout">
+
+          <!-- Steuerung links -->
+          <div class="rt-controls">
+
+            <!-- Vorlagen -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Vorlagen</span>
+              </div>
+              <div class="rt-section-body">
+                <div class="rt-preset-grid">
+                  <button class="rt-preset-btn" data-preset="einzellinse">Einzellinse</button>
+                  <button class="rt-preset-btn" data-preset="lupe">Lupe</button>
+                  <button class="rt-preset-btn" data-preset="kepler">Kepler-Fernrohr</button>
+                  <button class="rt-preset-btn" data-preset="galilei">Galilei-Fernrohr</button>
+                  <button class="rt-preset-btn" data-preset="mikroskop">Mikroskop</button>
+                  <button class="rt-preset-btn" data-preset="kamera">Kamera</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Objekt -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Objekt</span>
+                <button class="rt-add-btn" id="rt-obj-infinity" title="Objekt ins Unendliche setzen">∞ Unendlich</button>
+              </div>
+              <div class="rt-section-body">
+                <!-- Texteingaben -->
+                <div class="rt-input-pair">
+                  <label class="rt-input-label">
+                    Abstand a (m) · ISO 13666
+                    <input type="number" class="rt-input rt-obj-text" id="rt-obj-pos-text"
+                      value="-0.18" min="-9" max="-0.005" step="0.005" placeholder="m">
+                  </label>
+                  <label class="rt-input-label">
+                    Höhe y (m)
+                    <input type="number" class="rt-input rt-obj-text" id="rt-obj-h-text"
+                      value="0.025" min="0.002" max="0.12" step="0.001" placeholder="m">
+                  </label>
+                </div>
+                <!-- Schieberegler (synchron) -->
+                <div class="rt-slider-row" style="margin-top:6px">
+                  <div class="rt-slider-label">
+                    a <span id="rt-obj-pos-val">−0,180 m</span>
+                  </div>
+                  <input type="range" class="rt-slider" id="rt-obj-pos"
+                    min="-4" max="-0.01" value="-0.18" step="0.005">
+                </div>
+                <div class="rt-slider-row">
+                  <div class="rt-slider-label">
+                    y <span id="rt-obj-h-val">0,025 m</span>
+                  </div>
+                  <input type="range" class="rt-slider" id="rt-obj-height"
+                    min="0.002" max="0.06" value="0.025" step="0.001">
+                </div>
+              </div>
+            </div>
+
+            <!-- Linsen -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Linsen</span>
+                <button class="rt-add-btn" id="rt-add-lens">+ Linse</button>
+              </div>
+              <div class="rt-section-body">
+                <div id="lens-list"></div>
+              </div>
+            </div>
+
+            <!-- Blenden -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Blenden</span>
+                <button class="rt-add-btn" id="rt-add-aperture">+ Blende</button>
+              </div>
+              <div class="rt-section-body">
+                <div id="aperture-list"></div>
+              </div>
+            </div>
+
+            <!-- Strahltypen -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Strahltypen</span>
+              </div>
+              <div class="rt-section-body">
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-parallel" checked>
+                  <span class="rt-ray-dot" style="background:#f87171"></span>
+                  Achsenparallelstrahl
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-focal" checked>
+                  <span class="rt-ray-dot" style="background:#60a5fa"></span>
+                  Brennpunktstrahl
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-central" checked>
+                  <span class="rt-ray-dot" style="background:#c084fc"></span>
+                  Hauptstrahl (opt. Zentrum)
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-virtual" checked>
+                  <span class="rt-ray-dot" style="background:#94a3b8; opacity:.7"></span>
+                  Virtuelle Strahlen (Rückw.)
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-marginal">
+                  <span class="rt-ray-dot" style="background:#fb923c"></span>
+                  Axialer Rand-/Öffnungsstrahl
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-chief">
+                  <span class="rt-ray-dot" style="background:#fb923c; opacity:.6"></span>
+                  Blendenhauptstrahl
+                </label>
+                <label class="rt-checkbox-row">
+                  <input type="checkbox" id="rt-ray-oblique">
+                  <span class="rt-ray-dot" style="background:#34d399"></span>
+                  Schiefer Öffnungsstrahl
+                </label>
+                <label class="rt-checkbox-row" title="Nur bei Systemen mit ≥2 Linsen">
+                  <input type="checkbox" id="rt-show-cardinals" checked>
+                  <span class="rt-ray-dot" style="background:#5eead4"></span>
+                  Systemhauptebenen &amp; -brennpunkte (H/H′, F/F′)
+                </label>
+              </div>
+            </div>
+
+            <!-- Bildgrößen & Abbildungsgleichung -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Bildgrößen &amp; Abbildung</span>
+              </div>
+              <div class="rt-section-body" style="font-size:0.81rem;color:var(--text-secondary);line-height:1.7">
+                <table style="width:100%;border-collapse:collapse">
+                  <tbody>
+                    <tr>
+                      <td style="padding:3px 6px 3px 0;font-family:monospace;color:var(--accent);white-space:nowrap">a</td>
+                      <td style="padding:3px 0">Gegenstandsweite (m) — negativ, da links der Linse</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 6px 3px 0;font-family:monospace;color:var(--accent);white-space:nowrap">a'</td>
+                      <td style="padding:3px 0">Bildweite (m) — positiv bei reellem Bild rechts der Linse</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 6px 3px 0;font-family:monospace;color:var(--accent);white-space:nowrap">y</td>
+                      <td style="padding:3px 0">Gegenstandsgröße (m) — Pfeilhöhe des Objekts</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 6px 3px 0;font-family:monospace;color:var(--accent);white-space:nowrap">y'</td>
+                      <td style="padding:3px 0">Bildgröße (m) — Pfeilhöhe des Bildes</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 6px 3px 0;font-family:monospace;color:var(--accent);white-space:nowrap">β'</td>
+                      <td style="padding:3px 0">Lateraler Abbildungsmaßstab = y'/y = a'/a</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:8px;padding:8px;background:var(--bg-base);border-radius:var(--radius-sm);font-size:0.79rem">
+                  <strong style="color:var(--text-primary)">Abbildungsgleichung (dünne Linse):</strong><br>
+                  <span style="font-family:monospace;color:var(--accent)">1/a' − 1/a = D &nbsp;(a, a' in Meter, D in dpt)</span><br>
+                  <span style="font-family:monospace;color:var(--accent)">f' = 1/D &nbsp;(Meter)</span><br>
+                  <span style="color:var(--text-muted);font-size:0.76rem">β' &lt; 0 → umgekehrtes Bild · |β'| &lt; 1 → verkleinert · |β'| &gt; 1 → vergrößert</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Aktionen -->
+            <div class="rt-section">
+              <div class="rt-section-body">
+                <button class="rt-action-btn" id="rt-auto-viewport">
+                  ⟲ Ansicht anpassen
+                </button>
+              </div>
+            </div>
+
+          </div><!-- /rt-controls -->
+
+          <!-- Canvas rechts -->
+          <div class="rt-canvas-wrap">
+            <!-- Zoom-Toolbar -->
+            <div class="canvas-zoom-bar">
+              <button class="zoom-btn" id="rt-zoom-in" title="Vergrößern">＋</button>
+              <button class="zoom-btn" id="rt-zoom-out" title="Verkleinern">－</button>
+              <button class="zoom-btn" id="rt-zoom-reset" title="Ansicht zurücksetzen">⟲</button>
+              <span class="zoom-hint">Scrollrad = Zoom · Ziehen = Schwenken</span>
+            </div>
+            <canvas id="ray-canvas"></canvas>
+            <div class="canvas-toolbar">
+              <div class="canvas-info" id="rt-info">
+                Scrollrad zum Zoomen · Klicken &amp; Ziehen zum Verschieben
+              </div>
+            </div>
+            <!-- Erklärung Strahltypen -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Strahltypen erklärt</span>
+              </div>
+              <div class="rt-section-body" style="font-size:0.82rem; color:var(--text-secondary); line-height:1.6;">
+                <p style="margin-bottom:8px">
+                  <strong style="color:#f87171">Achsenparallelstrahl:</strong>
+                  Läuft parallel zur optischen Achse ein und wird nach der Linse durch den hinteren Brennpunkt F' gebrochen. Klassischer Bildkonstruktionsstrahl.
+                </p>
+                <p style="margin-bottom:8px">
+                  <strong style="color:#60a5fa">Brennpunktstrahl:</strong>
+                  Verläuft vom Objektpunkt durch den vorderen Brennpunkt F und tritt nach der Linse achsenparallel aus.
+                </p>
+                <p style="margin-bottom:8px">
+                  <strong style="color:#c084fc">Hauptstrahl (opt. Zentrum):</strong>
+                  Geht vom außeraxialen Objektpunkt durch das optische Zentrum der (ersten) Linse und wird für dünne Linsen nicht abgelenkt. Bildkonstruktionsstrahl.
+                </p>
+                <p style="margin-bottom:8px">
+                  <strong style="color:#fb923c">Axialer Öffnungsstrahl (Randstrahl):</strong>
+                  Vom achsnahen Objektpunkt (y = 0, auf der opt. Achse) durch den oberen und unteren Rand der Aperturblende. Definiert die Bildebene.
+                </p>
+                <p style="margin-bottom:8px">
+                  <strong style="color:#fb923c; opacity:0.7">Blendenhauptstrahl:</strong>
+                  Vom außeraxialen Objektpunkt durch das Zentrum der Aperturblende (= Blendenmittelpunkt, y = 0). Definiert die Bildhöhe. Ohne separate Blende identisch mit Hauptstrahl.
+                </p>
+                <p style="margin-bottom:8px">
+                  <strong style="color:#34d399">Schiefer Öffnungsstrahl:</strong>
+                  Vom außeraxialen Objektpunkt zum oberen und unteren Rand der Aperturblende (Eintrittspupille). Begrenzt den Öffnungswinkel für außeraxiale Punkte.
+                </p>
+                <p style="margin-bottom:0">
+                  <strong style="color:#a78bfa">EP / AP (Blendenbilder):</strong>
+                  Eintrittspupille (EP, lila) und Austrittspupille (AP, gelb) erscheinen automatisch, wenn eine separate Aperturblende eingesetzt wird.
+                </p>
+              </div>
+            </div>
+          </div><!-- /rt-canvas-wrap -->
+
+        </div><!-- /raytracer-layout -->
+      </div>
+
+      <!-- ── Tab: Prismen ───────────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-prism" role="tabpanel">
+        <div class="prism-layout">
+
+          <!-- Steuerung links -->
+          <div class="prism-controls">
+
+            <!-- Reset-Leiste -->
+            <div class="prism-toolbar">
+              <button class="prism-reset-btn" id="pr-link" title="Teilbaren Link mit diesen Werten kopieren">🔗 Link</button>
+              <button class="prism-reset-btn" id="pr-copy" title="Ergebnisse als Text kopieren">📋 Kopieren</button>
+              <button class="prism-reset-btn" id="pr-reset" title="Alle Eingaben zurücksetzen">⟲ Zurücksetzen</button>
+            </div>
+
+            <!-- Glasparameter -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Glasparameter</span>
+              </div>
+              <div class="rt-section-body">
+                <table class="prism-table">
+                  <thead><tr><th class="prism-th-label"></th><th>Rechts (R)</th><th>Links (L)</th></tr></thead>
+                  <tbody>
+                    <tr><td class="prism-row-label">Sphäre (dpt)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-sph" step="0.25" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-sph" step="0.25" value="0"></td></tr>
+                    <tr><td class="prism-row-label">Zylinder (dpt)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-cyl" step="0.25" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-cyl" step="0.25" value="0"></td></tr>
+                    <tr><td class="prism-row-label">Achse (°)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-ax" min="0" max="180" step="1" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-ax" min="0" max="180" step="1" value="0"></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Fehlzentrierung -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Fehlzentrierung (Δ)</span>
+              </div>
+              <div class="rt-section-body">
+                <div class="prism-hint">
+                  Δx &gt; 0 → OZ <strong>nasal</strong> der Pupille (beide Augen)<br>
+                  Δy &gt; 0 → OZ <strong>über</strong> der Pupille (beide Augen)<br>
+                  <span style="opacity:.75">x/y-System: nasal &amp; oben = positiv</span>
+                </div>
+                <table class="prism-table">
+                  <thead><tr><th class="prism-th-label"></th><th>Rechts (R)</th><th>Links (L)</th></tr></thead>
+                  <tbody>
+                    <tr><td class="prism-row-label">Δx (mm)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-dx" step="0.5" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-dx" step="0.5" value="0"></td></tr>
+                    <tr><td class="prism-row-label">Δy (mm)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-dy" step="0.5" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-dy" step="0.5" value="0"></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Verschriebenes Prisma -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Verschriebenes Prisma</span>
+              </div>
+              <div class="rt-section-body">
+                <table class="prism-table">
+                  <thead><tr><th class="prism-th-label"></th><th>Rechts (R)</th><th>Links (L)</th></tr></thead>
+                  <tbody>
+                    <tr><td class="prism-row-label">Wert (pdpt)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-pval" step="0.25" value="0" min="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-pval" step="0.25" value="0" min="0"></td></tr>
+                    <tr><td class="prism-row-label">Basis (°)</td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-R-pax" min="0" max="360" step="1" value="0"></td>
+                      <td><input type="number" class="rt-input pr-input" id="pr-L-pax" min="0" max="360" step="1" value="0"></td></tr>
+                    <tr><td class="prism-row-label">Schnell</td>
+                      <td>
+                        <div class="prism-dir-btns">
+                          <button class="prism-dir-btn" data-eye="R" data-angle="0"   title="0° = B out (temporal)">→</button>
+                          <button class="prism-dir-btn" data-eye="R" data-angle="90"  title="90° = B oben">↑</button>
+                          <button class="prism-dir-btn" data-eye="R" data-angle="180" title="180° = B in (nasal)">←</button>
+                          <button class="prism-dir-btn" data-eye="R" data-angle="270" title="270° = B unten">↓</button>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="prism-dir-btns">
+                          <button class="prism-dir-btn" data-eye="L" data-angle="0"   title="0° = B in (nasal)">→</button>
+                          <button class="prism-dir-btn" data-eye="L" data-angle="90"  title="90° = B oben">↑</button>
+                          <button class="prism-dir-btn" data-eye="L" data-angle="180" title="180° = B out (temporal)">←</button>
+                          <button class="prism-dir-btn" data-eye="L" data-angle="270" title="270° = B unten">↓</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Ergebnisse -->
+            <div id="prism-results"></div>
+
+          </div><!-- /prism-controls -->
+
+          <!-- Canvas + Infos rechts -->
+          <div class="prism-canvas-wrap">
+            <canvas id="prism-canvas"></canvas>
+
+            <!-- Legende & Erklärung -->
+            <div class="rt-section" style="margin-top:10px">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Legende &amp; Hinweise</span>
+              </div>
+              <div class="rt-section-body" style="font-size:0.82rem; color:var(--text-secondary); line-height:1.6;">
+                <p style="margin-bottom:6px"><strong style="color:#f87171">●</strong> Gesamtprisma = PNW + Rezeptprisma (Vektoraddition)</p>
+                <p style="margin-bottom:6px"><strong style="color:#60a5fa">●</strong> Horizontalkomponente — B in (nasal) oder B out (temporal)</p>
+                <p style="margin-bottom:6px"><strong style="color:#c084fc">●</strong> Vertikalkomponente — B oben oder B unten</p>
+                <p style="margin-bottom:6px"><strong>TABO-Winkel:</strong> 0° = rechts extern (temporal RA / nasal LA), 90° = oben, 180° = links extern, 270° = unten.</p>
+                <p style="margin-bottom:6px"><strong>PNW</strong> entsteht, wenn das optische Zentrum (OZ) des Glases nicht mit der Pupillenmitte übereinstimmt (Fehlzentrierung). Berechnung: Brechkraft-Matrix-Methode (exakt für sphärisch-torische Gläser).</p>
+                <p><strong>Vertikale Imbalance &gt; 1 pdpt</strong> gilt klinisch als relevant und kann Beschwerden verursachen.</p>
+              </div>
+            </div>
+          </div><!-- /prism-canvas-wrap -->
+
+        </div><!-- /prism-layout -->
+      </div>
+
+      <!-- ── Tab: Refraktion ───────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-refraction" role="tabpanel">
+        <div class="ref-layout">
+
+          <!-- ── Linke Spalte: Simulator ──────────────────────────────── -->
+          <div class="ref-sim-col">
+
+            <!-- Patient / Kopfzeile -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Refraktionssimulator</span>
+                <button class="rt-add-btn" id="ref-new-case">🎲 Neuer Fall</button>
+              </div>
+              <div class="rt-section-body">
+                <div class="ref-meta-row">
+                  <div class="ref-toggle-group">
+                    <button class="ref-eye-btn active" data-eye="R">RA</button>
+                    <button class="ref-eye-btn"        data-eye="L">LA</button>
+                  </div>
+                  <span id="ref-patient-info" style="font-size:0.8rem;color:var(--text-muted)"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phasen-Panel (dynamisch durch JS befüllt) -->
+            <div id="ref-phase-panel"></div>
+
+            <!-- Probeglas -->
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Probeglas</span>
+                <button class="rt-add-btn" id="ref-reset-rx">⌫ Reset</button>
+              </div>
+              <div class="rt-section-body">
+                <div class="ref-rx-grid">
+                  <label class="rt-input-label">Sphäre (dpt)
+                    <input type="number" class="rt-input" id="ref-s" step="0.25" value="0">
+                  </label>
+                  <label class="rt-input-label">Zylinder (dpt)
+                    <input type="number" class="rt-input" id="ref-c" step="0.25" value="0">
+                  </label>
+                  <label class="rt-input-label">Achse (°)
+                    <input type="number" class="rt-input" id="ref-ax" step="5" value="0" min="0" max="180">
+                  </label>
+                </div>
+                <div class="ref-quick-btns">
+                  <button class="ref-quick-btn" data-ds="+0.25">+0,25 S</button>
+                  <button class="ref-quick-btn" data-ds="-0.25">−0,25 S</button>
+                  <button class="ref-quick-btn" data-dc="-0.25">−0,25 C</button>
+                  <button class="ref-quick-btn" data-dc="+0.25">+0,25 C</button>
+                  <button class="ref-quick-btn" data-dax="-5">Achse −5°</button>
+                  <button class="ref-quick-btn" data-dax="+5">Achse +5°</button>
+                </div>
+                <button class="rt-action-btn" id="ref-test-btn"
+                  style="width:100%;margin-top:10px;padding:10px;font-size:0.92rem;font-weight:600;border-color:var(--accent);color:var(--accent)">
+                  ➜ Patient befragen
+                </button>
+              </div>
+            </div>
+
+            <!-- Patientenantworten (dynamisch) -->
+            <div id="ref-assessment" style="display:none"></div>
+
+            <!-- Lösung -->
+            <button class="rt-action-btn" id="ref-reveal-btn"
+              style="width:100%;color:var(--warning);border-color:rgba(251,191,36,0.35);padding:9px">
+              👁 Lösung anzeigen
+            </button>
+
+          </div><!-- /ref-sim-col -->
+
+          <!-- ── Rechte Spalte: Referenz ──────────────────────────────── -->
+          <div class="ref-ref-col">
+            <div class="rt-section">
+              <div class="rt-section-header">
+                <span class="rt-section-title">Methoden erklärt</span>
+              </div>
+              <div class="rt-section-body ref-methods-explainer">
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">BSG — Bestes Sphärisches Glas</div>
+                    <div class="ref-method-card-body">
+                      <strong>Donders-Methode (Nebeln):</strong> +1,50 dpt auf einmal über die Ausgangskorrektur — nicht schrittweise (schrittweises Plus dämpft Akkommodation). Ziel-Visus: ≤ 0,5 (Pfeilring-Grenzzeile). Bei besserem Visus → weiteren Nebel zugeben.<br>
+                      <strong>Ausnebeln (Wegziehbefragung):</strong> −0,25 dpt-Schritte. „Besser oder schlechter?" Bei „gleich" → einmalig nochmals −0,25 dpt; bei erneutem „gleich" oder „schlechter" → BSG bestätigen.<br>
+                      <strong>BSG-Probe:</strong> +0,25 dpt vorhalten → Patient: „schlechter" → BSG gesichert ✓.<br>
+                      <em>Merksatz: Maximum Plus für Maximum Visus.</em>
+                    </div>
+                  </div>
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">ZNM — Zylindernebelmethode</div>
+                    <div class="ref-method-card-body">
+                      <strong>Nebelzusatz:</strong> Über das BSG zusätzlich Cyl<sub>geschätzt</sub>/2 + 0,50 dpt (mind. +0,50 dpt; typisch +0,75–1,00 dpt). Nebelprobe: −0,25 dpt vorhalten → „schlechter" → Nebel ausreichend.<br>
+                      <strong>Achsbestimmung (BSL):</strong> Querstrichschema oder Fächertafel vorlegen. Patient nennt schärfste Strichrichtung (BSL = Beste Sehstrahlenrichtung). Minus-Zylinderachse senkrecht zur BSL einsetzen.<br>
+                      <strong>Schwärzungsdrehung:</strong> Strich 45° zur Zylinderachse vorlegen → in 5°-Schritten drehen bis beide Striche gleich dunkel (45°-Regel).<br>
+                      <strong>Zylinderstärke:</strong> −0,25 dpt-Schritte bis alle Striche gleich scharf (Astigmatismus-Intervall aufgelöst).<br>
+                      <strong>Entnebeln &amp; SE-Ausgleich:</strong> Sphärischen Nebel −0,25 dpt-weise reduzieren. SE-Regel: je −0,25 dpt Zyl → +0,125 dpt Sph kompensieren.
+                    </div>
+                  </div>
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">ZNM-Variante</div>
+                    <div class="ref-method-card-body">
+                      Wie ZNM, aber initiale Achsenbestimmung mit Stenopäischem Spalt (Achse = Stellung mit bestem Visus) oder grober KZM-Vorabbestimmung. Anschließend Feinabstimmung mit Querstrichschema und Schwärzungsdrehung wie bei ZNM. Vorteil: schnellere Achsfindung bei stark abweichendem Ausgangswert.
+                    </div>
+                  </div>
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">KZM — Kreuzzylindermethode (Jackson)</div>
+                    <div class="ref-method-card-body">
+                      <strong>KRZ-Stufung (visusabhängig):</strong> Vis ≥ 0,6 → JCC ±0,25 dpt; Vis 0,2–0,6 → JCC ±0,50 dpt.<br>
+                      <strong>Schritt 1 – Achsabgleich (Befragung 1. Art):</strong> KRZ-Griffachse auf Probezylinderachse. Stellung 1: Minus-Achse 45° rechts; Stellung 2: Minus-Achse 45° links. „1 oder 2 klarer?" → Achse in 5–10°-Schritten rotieren (Stellung 1 klarer = im Uhrzeigersinn; Stellung 2 = gegen UZS) bis Gleichstand.<br>
+                      <strong>Schritt 2 – Stärkenabgleich (Befragung 2. Art):</strong> KRZ-Griffachse 45° zur Probeachse. „1 oder 2 klarer?" → Zyl anpassen. SE-Regel: je −0,25 dpt Zyl → +0,125 dpt Sph.<br>
+                      <strong>Sphärischer Zwischenabgleich</strong> nach jeder Stärkenänderung empfohlen.
+                    </div>
+                  </div>
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">KZM-Variante</div>
+                    <div class="ref-method-card-body">
+                      Wie KZM, aber JCC ±0,50 dpt für Grobanpassung (bei Vis &lt; 0,5 oder stark abweichenden Ausgangswerten), dann Feinabstimmung mit JCC ±0,25 dpt. Vorteil: deutlichere Patientenantworten bei niedrigem Ausgangsvisus; kürzere Sitzungsdauer bei ausgeprägtem Astigmatismus.
+                    </div>
+                  </div>
+
+                  <div class="ref-method-card">
+                    <div class="ref-method-card-title">Binokularer Abgleich (MKH nach Haase)</div>
+                    <div class="ref-method-card-body">
+                      <strong>Dissoziation:</strong> 3 pdpt Basis unten am rechten Auge (oder Polarisationsfilter). Patient sieht zwei übereinanderliegende Sehzeilen bei scheinbar gleicher Schärfe = Startbedingung.<br>
+                      <strong>Sphärenabgleich:</strong> Welche Zeile schärfer? Am schärfer gesehenen Auge −0,25 dpt Sphäre reduzieren bis Gleichstand. Dann binokuläre Sphäre bestätigen.<br>
+                      <strong>Heterophorie (MKH):</strong> Kreuztest (vertikal) und Zeigertest (horizontal) für assoziierte Phorie. Prismatische Korrektion nach Haase-Kriterien (Fixationsdisparität ausgleichen, nicht die volle dissoziierte Phorie).
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div><!-- /ref-ref-col -->
+
+        </div><!-- /ref-layout -->
+      </div>
+
+      <!-- ── Tab: Register / Symbolverzeichnis ─────────────────────── -->
+      <div class="tab-panel" id="tab-register" role="tabpanel">
+        <div class="reg-header">
+          <div>
+            <div class="reg-title">Symbolverzeichnis</div>
+            <div class="reg-subtitle">Alle verwendeten Abkürzungen und Symbole mit Erklärung</div>
+          </div>
+          <div class="reg-search-wrap">
+            <input type="search" id="reg-search" placeholder="Symbol oder Begriff suchen…" autocomplete="off" class="reg-search">
+          </div>
+        </div>
+        <div class="reg-category-filter" id="reg-cat-filter"></div>
+        <div id="register-content"></div>
+      </div>
+
+      <!-- ── Tab: Favoriten ──────────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-favorites" role="tabpanel">
+        <div class="fav-header">
+          <div class="fav-title">Meine Favoriten</div>
+          <div class="fav-subtitle">Mit ☆ markierte Formeln erscheinen hier</div>
+        </div>
+        <div class="formula-grid" id="favorites-grid"></div>
+      </div>
+
+      <!-- ── Tab: Beta ───────────────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-beta" role="tabpanel">
+        <div class="beta-intro">
+          <span class="beta-badge">BETA</span>
+          <span class="beta-intro-text">Zusätzliche Werkzeuge – in Aufbau, neue Module kommen nach und nach dazu.</span>
+        </div>
+        <div class="beta-grid" id="beta-grid"></div>
+        <div class="beta-tool" id="beta-tool" style="display:none"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Formel-Detail Modal ─────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="formula-modal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/formulas.js"></script>
+  <script src="js/algebra.js"></script>
+  <script src="js/raytracer.js"></script>
+  <script src="js/prism.js"></script>
+  <script src="js/refraction.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/beta.js"></script>
+</body>
+</html>
